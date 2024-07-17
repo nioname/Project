@@ -3,7 +3,7 @@
 Plugin Name: Optimum API Integration
 Description: Integrates WooCommerce with Optimum API for automatic and manual invoice sending.
 Version: 1.0
-Author: asdasd
+Author: asd
 */
 
 // Add a daily event to send invoices at 9:00 AM
@@ -14,26 +14,53 @@ function optimum_api_activation() {
     if (!wp_next_scheduled('optimum_api_daily_event')) {
         wp_schedule_event(strtotime('09:00:00'), 'daily', 'optimum_api_daily_event');
     }
-    error_log('Optimum API Integration activation hook executed');
+    error_log('Optimum API Integration activation hook executed', 3, WP_CONTENT_DIR . '/debug.log');
 }
 
 function optimum_api_deactivation() {
     wp_clear_scheduled_hook('optimum_api_daily_event');
-    error_log('Optimum API Integration deactivation hook executed');
+    error_log('Optimum API Integration deactivation hook executed', 3, WP_CONTENT_DIR . '/debug.log');
 }
 
 add_action('optimum_api_daily_event', 'optimum_api_send_invoices');
 
 function optimum_api_send_invoices() {
-    error_log('Optimum API Integration daily event triggered');
+    error_log('Optimum API Integration daily event triggered', 3, WP_CONTENT_DIR . '/debug.log');
     $orders = wc_get_orders(array('status' => 'completed'));
     foreach ($orders as $order) {
         optimum_api_send_invoice($order);
     }
 }
 
+function get_next_invoice_number() {
+    // Gauti paskutinį panaudotą sąskaitos numerį iš duomenų bazės
+    $last_invoice_no = get_option('optimum_last_invoice_no', 0);
+    // Padidinti sąskaitos numerį
+    $next_invoice_no = $last_invoice_no + 1;
+    // Išsaugoti atnaujintą sąskaitos numerį
+    update_option('optimum_last_invoice_no', $next_invoice_no);
+    // Grąžinti suformatuotą sąskaitos numerį
+    return 'AUE-' . str_pad($next_invoice_no, 7, '0', STR_PAD_LEFT);
+}
+
+function optimum_invoice_exists($invoice_no) {
+    // Patikrinti, ar sąskaita jau egzistuoja (pavyzdys: galite sąskaitų numerių sąrašą saugoti duomenų bazėje)
+    $existing_invoices = get_option('optimum_existing_invoices', array());
+    return in_array($invoice_no, $existing_invoices);
+}
+
 function optimum_api_send_invoice($order) {
-    error_log('Sending invoice for order ' . $order->get_id());
+    error_log('Sending invoice for order ' . $order->get_id(), 3, WP_CONTENT_DIR . '/debug.log');
+
+    // Generate the next invoice number
+    $invoice_no = get_next_invoice_number();
+
+    // Check before sending
+    if (optimum_invoice_exists($invoice_no)) {
+        error_log('Invoice ' . $invoice_no . ' already exists. Skipping.', 3, WP_CONTENT_DIR . '/debug.log');
+        return;
+    }
+
     $soap_body = '<?xml version="1.0" encoding="utf-8"?>
     <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
       <soap:Header>
@@ -45,7 +72,7 @@ function optimum_api_send_invoice($order) {
         <InsertInvoice xmlns="http://api.optimum.lt/v1/lt/Trd/">
           <invoice>
             <Date>' . $order->get_date_created()->date('Y-m-d') . '</Date>
-            <No>' . $order->get_order_number() . '</No>
+            <No>' . $invoice_no . '</No>
             <CstCompany>
               <Name>' . $order->get_billing_first_name() . ' ' . $order->get_billing_last_name() . ' (' . $order->get_billing_email() . ')</Name>
               <CstGrpFllCode>LT</CstGrpFllCode>
@@ -64,7 +91,7 @@ function optimum_api_send_invoice($order) {
         $product = $item->get_product();
         $soap_body .= '
             <InvArticle>
-              <ArtCode>' . $product->get_sku() . '</ArtCode>
+              <ArtCode>' . $product->get_sku() . '</ArtCode> <!-- Using product SKU as ArtCode -->
               <StrFllCode>S</StrFllCode>
               <Quantity>' . $item->get_quantity() . '</Quantity>
               <UntPrice>' . $product->get_price() . '</UntPrice>
@@ -92,12 +119,23 @@ function optimum_api_send_invoice($order) {
 
     // Handle response
     if (is_wp_error($response)) {
-        error_log('Optimum API request error: ' . $response->get_error_message());
+        error_log('Optimum API request error: ' . $response->get_error_message(), 3, WP_CONTENT_DIR . '/debug.log');
     } else {
         $response_body = wp_remote_retrieve_body($response);
-        error_log('Optimum API response: ' . $response_body);
+        error_log('Optimum API response: ' . $response_body, 3, WP_CONTENT_DIR . '/debug.log');
+        
+        // Check if the response is successful and the invoice was recorded
+        if (strpos($response_body, '<Status>Success</Status>') !== false) {
+            // Record the invoice number in the list of existing invoices
+            $existing_invoices = get_option('optimum_existing_invoices', array());
+            $existing_invoices[] = $invoice_no;
+            update_option('optimum_existing_invoices', $existing_invoices);
+        } else {
+            error_log('Optimum API returned an error: ' . $response_body, 3, WP_CONTENT_DIR . '/debug.log');
+        }
     }
 }
+
 
 // Add a button to the order edit page to send the invoice to Optimum
 add_action('add_meta_boxes', 'optimum_api_add_meta_box');
@@ -108,7 +146,7 @@ function optimum_api_add_meta_box() {
 function optimum_api_send_box_callback($post) {
     $order = wc_get_order($post->ID);
     if ($order->get_status() == 'completed') {
-        echo '<button class="button" id="optimum_api_send_button">Send to Optimum</button>';
+        echo '<button class="button" id="optimum_api_send_button" data-order-id="' . $post->ID . '">Send to Optimum</button>';
     } else {
         echo '<p>Order is not completed</p>';
     }
