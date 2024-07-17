@@ -3,7 +3,7 @@
 Plugin Name: Optimum API Integration
 Description: Integrates WooCommerce with Optimum API for automatic and manual invoice sending.
 Version: 1.0
-Author: asd
+Author: Your Name
 */
 
 // Add a daily event to send invoices at 9:00 AM
@@ -40,7 +40,7 @@ function get_next_invoice_number() {
     // Išsaugoti atnaujintą sąskaitos numerį
     update_option('optimum_last_invoice_no', $next_invoice_no);
     // Grąžinti suformatuotą sąskaitos numerį
-    return 'AUE-' . str_pad($next_invoice_no, 7, '0', STR_PAD_LEFT);
+    return 'AUE-' . str_pad($next_invoice_no, 6, '0', STR_PAD_LEFT);
 }
 
 function optimum_invoice_exists($invoice_no) {
@@ -52,14 +52,8 @@ function optimum_invoice_exists($invoice_no) {
 function optimum_api_send_invoice($order) {
     error_log('Sending invoice for order ' . $order->get_id(), 3, WP_CONTENT_DIR . '/debug.log');
 
-    // Generate the next invoice number
-    $invoice_no = get_next_invoice_number();
-
-    // Check before sending
-    if (optimum_invoice_exists($invoice_no)) {
-        error_log('Invoice ' . $invoice_no . ' already exists. Skipping.', 3, WP_CONTENT_DIR . '/debug.log');
-        return;
-    }
+    // Generate the invoice number based on the order ID
+    $invoice_no = 'AUE-' . str_pad($order->get_id(), 7, '0', STR_PAD_LEFT);
 
     $soap_body = '<?xml version="1.0" encoding="utf-8"?>
     <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
@@ -89,15 +83,19 @@ function optimum_api_send_invoice($order) {
 
     foreach ($order->get_items() as $item) {
         $product = $item->get_product();
+        $quantity = $item->get_quantity();
+        $price = $product->get_price();
+        $price_with_vat = $price * 1.21;
+
         $soap_body .= '
             <InvArticle>
-              <ArtCode>' . $product->get_sku() . '</ArtCode> <!-- Using product SKU as ArtCode -->
+              <ArtCode>000000</ArtCode> <!-- Fixed ArtCode as per instructions -->
               <StrFllCode>S</StrFllCode>
-              <Quantity>' . $item->get_quantity() . '</Quantity>
-              <UntPrice>' . $product->get_price() . '</UntPrice>
+              <Quantity>' . $quantity . '</Quantity>
+              <UntPrice>' . $price . '</UntPrice>
               <Discount>0</Discount>
               <VatTariff>0.21</VatTariff>
-              <ExtPrice>' . ($product->get_price() * 1.21) . '</ExtPrice>
+              <ExtPrice>' . $price_with_vat . '</ExtPrice>
             </InvArticle>';
     }
 
@@ -126,16 +124,12 @@ function optimum_api_send_invoice($order) {
         
         // Check if the response is successful and the invoice was recorded
         if (strpos($response_body, '<Status>Success</Status>') !== false) {
-            // Record the invoice number in the list of existing invoices
-            $existing_invoices = get_option('optimum_existing_invoices', array());
-            $existing_invoices[] = $invoice_no;
-            update_option('optimum_existing_invoices', $existing_invoices);
+            // Optionally handle success (e.g., mark invoice as sent)
         } else {
             error_log('Optimum API returned an error: ' . $response_body, 3, WP_CONTENT_DIR . '/debug.log');
         }
     }
 }
-
 
 // Add a button to the order edit page to send the invoice to Optimum
 add_action('add_meta_boxes', 'optimum_api_add_meta_box');
