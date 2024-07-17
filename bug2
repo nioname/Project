@@ -33,18 +33,13 @@ function optimum_api_send_invoices() {
 }
 
 function get_next_invoice_number() {
-    // Gauti paskutinį panaudotą sąskaitos numerį iš duomenų bazės
     $last_invoice_no = get_option('optimum_last_invoice_no', 0);
-    // Padidinti sąskaitos numerį
     $next_invoice_no = $last_invoice_no + 1;
-    // Išsaugoti atnaujintą sąskaitos numerį
     update_option('optimum_last_invoice_no', $next_invoice_no);
-    // Grąžinti suformatuotą sąskaitos numerį
     return 'AUE-' . str_pad($next_invoice_no, 6, '0', STR_PAD_LEFT);
 }
 
 function optimum_invoice_exists($invoice_no) {
-    // Patikrinti, ar sąskaita jau egzistuoja (pavyzdys: galite sąskaitų numerių sąrašą saugoti duomenų bazėje)
     $existing_invoices = get_option('optimum_existing_invoices', array());
     return in_array($invoice_no, $existing_invoices);
 }
@@ -52,17 +47,16 @@ function optimum_invoice_exists($invoice_no) {
 function optimum_api_send_invoice($order) {
     error_log('Sending invoice for order ' . $order->get_id(), 3, WP_CONTENT_DIR . '/debug.log');
 
-    // Generate the invoice number based on the order ID
     $invoice_no = 'AUE-' . str_pad($order->get_id(), 7, '0', STR_PAD_LEFT);
 
     $soap_body = '<?xml version="1.0" encoding="utf-8"?>
-    <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-      <soap:Header>
+    <soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
+      <soap12:Header>
         <Header xmlns="http://api.optimum.lt/v1/lt/Trd/">
           <Key>KMlz7zZzU80Ry5xs3OvjlnY4JLHHvTuMqqVdXuQ0hn3NXNk9Ov6adBePTIG20U4Y</Key>
         </Header>
-      </soap:Header>
-      <soap:Body>
+      </soap12:Header>
+      <soap12:Body>
         <InsertInvoice xmlns="http://api.optimum.lt/v1/lt/Trd/">
           <invoice>
             <Date>' . $order->get_date_created()->date('Y-m-d') . '</Date>
@@ -89,7 +83,7 @@ function optimum_api_send_invoice($order) {
 
         $soap_body .= '
             <InvArticle>
-              <ArtCode>000000</ArtCode> <!-- Fixed ArtCode as per instructions -->
+              <ArtCode>000000</ArtCode>
               <StrFllCode>S</StrFllCode>
               <Quantity>' . $quantity . '</Quantity>
               <UntPrice>' . $price . '</UntPrice>
@@ -103,13 +97,13 @@ function optimum_api_send_invoice($order) {
             </Articles>
           </invoice>
         </InsertInvoice>
-      </soap:Body>
-    </soap:Envelope>';
+      </soap12:Body>
+    </soap12:Envelope>';
 
     $response = wp_remote_post('http://api.optimum.lt/v1/lt/Trd.asmx', array(
         'method' => 'POST',
         'headers' => array(
-            'Content-Type' => 'text/xml; charset=utf-8',
+            'Content-Type' => 'application/soap+xml; charset=utf-8',
             'SOAPAction' => 'http://api.optimum.lt/v1/lt/Trd/InsertInvoice'
         ),
         'body' => $soap_body
@@ -120,13 +114,15 @@ function optimum_api_send_invoice($order) {
         error_log('Optimum API request error: ' . $response->get_error_message(), 3, WP_CONTENT_DIR . '/debug.log');
     } else {
         $response_body = wp_remote_retrieve_body($response);
-        error_log('Optimum API response: ' . $response_body, 3, WP_CONTENT_DIR . '/debug.log');
-        
-        // Check if the response is successful and the invoice was recorded
-        if (strpos($response_body, '<Status>Success</Status>') !== false) {
-            // Optionally handle success (e.g., mark invoice as sent)
+        if (is_null($response_body)) {
+            error_log('Response body is null', 3, WP_CONTENT_DIR . '/debug.log');
         } else {
-            error_log('Optimum API returned an error: ' . $response_body, 3, WP_CONTENT_DIR . '/debug.log');
+            error_log('Optimum API response: ' . $response_body, 3, WP_CONTENT_DIR . '/debug.log');
+            if (isset($response_body) && strpos($response_body, '<Status>Success</Status>') !== false) {
+                error_log('Optimum API invoice sent successfully for order ' . $order->get_id(), 3, WP_CONTENT_DIR . '/debug.log');
+            } else {
+                error_log('Optimum API returned an error: ' . $response_body, 3, WP_CONTENT_DIR . '/debug.log');
+            }
         }
     }
 }
