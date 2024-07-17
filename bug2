@@ -1,0 +1,189 @@
+<?php
+/*
+Plugin Name: Optimum API Integration
+Description: Integrates WooCommerce with Optimum API for automatic and manual invoice sending.
+Version: 1.0
+Author: Your Name
+*/
+
+// Add a daily event to send invoices at 9:00 AM
+register_activation_hook(__FILE__, 'optimum_api_activation');
+register_deactivation_hook(__FILE__, 'optimum_api_deactivation');
+
+function optimum_api_activation() {
+    if (!wp_next_scheduled('optimum_api_daily_event')) {
+        wp_schedule_event(strtotime('09:00:00'), 'daily', 'optimum_api_daily_event');
+    }
+    error_log('Optimum API Integration activation hook executed');
+}
+
+function optimum_api_deactivation() {
+    wp_clear_scheduled_hook('optimum_api_daily_event');
+    error_log('Optimum API Integration deactivation hook executed');
+}
+
+add_action('optimum_api_daily_event', 'optimum_api_send_invoices');
+
+function optimum_api_send_invoices() {
+    error_log('Optimum API Integration daily event triggered');
+    $orders = wc_get_orders(array('status' => 'completed'));
+    foreach ($orders as $order) {
+        optimum_api_send_invoice($order);
+    }
+}
+
+function optimum_api_send_invoice($order) {
+    error_log('Sending invoice for order ' . $order->get_id());
+    $soap_body = '<?xml version="1.0" encoding="utf-8"?>
+    <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+      <soap:Header>
+        <Header xmlns="http://api.optimum.lt/v1/lt/Trd/">
+          <Key>KMlz7zZzU80Ry5xs3OvjlnY4JLHHvTuMqqVdXuQ0hn3NXNk9Ov6adBePTIG20U4Y</Key>
+        </Header>
+      </soap:Header>
+      <soap:Body>
+        <InsertInvoice xmlns="http://api.optimum.lt/v1/lt/Trd/">
+          <invoice>
+            <Date>' . $order->get_date_created()->date('Y-m-d') . '</Date>
+            <No>' . $order->get_order_number() . '</No>
+            <CstCompany>
+              <Name>' . $order->get_billing_first_name() . ' ' . $order->get_billing_last_name() . ' (' . $order->get_billing_email() . ')</Name>
+              <CstGrpFllCode>LT</CstGrpFllCode>
+              <Address>' . $order->get_billing_address_1() . '</Address>
+              <PstCode>' . $order->get_billing_postcode() . '</PstCode>
+              <CtName>' . $order->get_billing_city() . '</CtName>
+              <CountryId>LT</CountryId>
+              <Mobile>' . $order->get_billing_phone() . '</Mobile>
+              <EMail>' . $order->get_billing_email() . '</EMail>
+              <SbmCmpCode>false</SbmCmpCode>
+            </CstCompany>
+            <RspEmpCode>JPUN</RspEmpCode>
+            <Articles>';
+
+    foreach ($order->get_items() as $item) {
+        $product = $item->get_product();
+        $soap_body .= '
+            <InvArticle>
+              <ArtCode>' . $product->get_sku() . '</ArtCode>
+              <StrFllCode>S</StrFllCode>
+              <Quantity>' . $item->get_quantity() . '</Quantity>
+              <UntPrice>' . $product->get_price() . '</UntPrice>
+              <Discount>0</Discount>
+              <VatTariff>0.21</VatTariff>
+              <ExtPrice>' . ($product->get_price() * 1.21) . '</ExtPrice>
+            </InvArticle>';
+    }
+
+    $soap_body .= '
+            </Articles>
+          </invoice>
+        </InsertInvoice>
+      </soap:Body>
+    </soap:Envelope>';
+
+    $response = wp_remote_post('http://api.optimum.lt/v1/lt/Trd.asmx', array(
+        'method' => 'POST',
+        'headers' => array(
+            'Content-Type' => 'text/xml; charset=utf-8',
+            'SOAPAction' => 'http://api.optimum.lt/v1/lt/Trd/InsertInvoice'
+        ),
+        'body' => $soap_body
+    ));
+
+    // Handle response
+    if (is_wp_error($response)) {
+        error_log('Optimum API request error: ' . $response->get_error_message());
+    } else {
+        $response_body = wp_remote_retrieve_body($response);
+        error_log('Optimum API response: ' . $response_body);
+    }
+}
+
+// Add a button to the order edit page to send the invoice to Optimum
+add_action('add_meta_boxes', 'optimum_api_add_meta_box');
+function optimum_api_add_meta_box() {
+    add_meta_box('optimum_api_send_box', 'Send to Optimum', 'optimum_api_send_box_callback', 'shop_order', 'side', 'default');
+}
+
+function optimum_api_send_box_callback($post) {
+    $order = wc_get_order($post->ID);
+    if ($order->get_status() == 'completed') {
+        echo '<button class="button" id="optimum_api_send_button">Send to Optimum</button>';
+    } else {
+        echo '<p>Order is not completed</p>';
+    }
+}
+
+add_action('admin_footer', 'optimum_api_manual_send_js_order_edit');
+function optimum_api_manual_send_js_order_edit() {
+    ?>
+<script type="text/javascript">
+jQuery(document).ready(function($) {
+    $('#optimum_api_send_button').on('click', function(){
+        var order_id = $(this).data('order-id');
+        jQuery.post(ajaxurl, {
+            action: 'optimum_api_manual_send',
+            order_id: order_id
+        }, function(response) {
+            alert("Invoice sent to Optimum: " + response);
+        });
+    });
+});
+</script>
+    <?php
+}
+
+add_action('wp_ajax_optimum_api_manual_send', 'optimum_api_manual_send');
+function optimum_api_manual_send() {
+    if (!current_user_can('manage_options')) {
+        wp_die('Unauthorized user');
+    }
+
+    $order_id = intval($_POST['order_id']);
+    $order = wc_get_order($order_id);
+
+    if ($order && $order->get_status() == 'completed') {
+        optimum_api_send_invoice($order);
+        echo 'Success';
+    } else {
+        echo 'Order not found or not completed';
+    }
+
+    wp_die();
+}
+
+// Bulk action integration
+add_action('admin_enqueue_scripts', 'enqueue_custom_bulk_action_script');
+function enqueue_custom_bulk_action_script($hook) {
+    if ($hook != 'edit.php' && get_current_screen()->post_type != 'shop_order') {
+        return;
+    }
+    wp_enqueue_script('custom-bulk-action', plugin_dir_url(__FILE__) . 'custom-bulk-action.js', array('jquery'), null, true);
+}
+
+add_action('handle_bulk_actions-edit-shop_order', 'handle_send_to_optimum_bulk_action', 10, 3);
+function handle_send_to_optimum_bulk_action($redirect_to, $doaction, $post_ids) {
+    if ($doaction !== 'send_to_optimum') {
+        return $redirect_to;
+    }
+
+    foreach ($post_ids as $post_id) {
+        $order = wc_get_order($post_id);
+        if ($order && $order->get_status() == 'completed') {
+            optimum_api_send_invoice($order);
+        }
+    }
+
+    $redirect_to = add_query_arg('bulk_send_to_optimum_done', count($post_ids), $redirect_to);
+    return $redirect_to;
+}
+
+add_action('admin_notices', 'custom_bulk_action_admin_notice');
+function custom_bulk_action_admin_notice() {
+    if (!empty($_REQUEST['bulk_send_to_optimum_done'])) {
+        $count = intval($_REQUEST['bulk_send_to_optimum_done']);
+        printf('<div id="message" class="updated fade"><p>' .
+            _n('%s order sent to Optimum.', '%s orders sent to Optimum.', $count, 'your-text-domain') . '</p></div>', $count);
+    }
+}
+?>
