@@ -3,7 +3,7 @@
 Plugin Name: Optimum API Integration
 Description: Integrates WooCommerce with Optimum API for automatic and manual invoice sending.
 Version: 1.0
-Author: Your Name
+Author: asdasd
 */
 
 // Add a daily event to send invoices at 9:00 AM
