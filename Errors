@@ -1,0 +1,34 @@
+[17-Jul-2024 10:57:02 UTC] Optimum API Integration deactivation hook executed
+[17-Jul-2024 10:57:17 UTC] Optimum API Integration activation hook executed
+[17-Jul-2024 10:57:18 UTC] Optimum API Integration daily event triggered
+[17-Jul-2024 10:57:18 UTC] Sending invoice for order 67437
+[17-Jul-2024 10:57:18 UTC] Optimum API response: <?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><InsertInvoiceResponse xmlns="http://api.optimum.lt/v1/lt/Trd/"><InsertInvoiceResult><Status>Error</Status><Result xsi:nil="true" /><Error>Value cannot be null.
+Parameter name: InvArticle.ArtCode</Error></InsertInvoiceResult></InsertInvoiceResponse></soap:Body></soap:Envelope>
+[17-Jul-2024 10:57:18 UTC] Sending invoice for order 66728
+[17-Jul-2024 10:57:18 UTC] Optimum API response: <?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><InsertInvoiceResponse xmlns="http://api.optimum.lt/v1/lt/Trd/"><InsertInvoiceResult><Status>Error</Status><Result xsi:nil="true" /><Error>Value cannot be null.
+Parameter name: InvArticle.ArtCode</Error></InsertInvoiceResult></InsertInvoiceResponse></soap:Body></soap:Envelope>
+[17-Jul-2024 10:57:18 UTC] Optimum API response: <?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><InsertInvoiceResponse xmlns="http://api.optimum.lt/v1/lt/Trd/"><InsertInvoiceResult><Status>Error</Status><Result xsi:nil="true" /><Error>Value cannot be null.
+Parameter name: InvArticle.ArtCode</Error></InsertInvoiceResult></InsertInvoiceResponse></soap:Body></soap:Envelope>
+[17-Jul-2024 10:57:18 UTC] Sending invoice for order 66675
+[17-Jul-2024 10:57:18 UTC] Optimum API response: <?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><InsertInvoiceResponse xmlns="http://api.optimum.lt/v1/lt/Trd/"><InsertInvoiceResult><Status>Error</Status><Result xsi:nil="true" /><Error>Value cannot be null.
+Parameter name: InvArticle.ArtCode</Error></InsertInvoiceResult></InsertInvoiceResponse></soap:Body></soap:Envelope>
+[17-Jul-2024 10:57:18 UTC] Sending invoice for order 66651
+[17-Jul-2024 10:57:18 UTC] Optimum API response: <?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><InsertInvoiceResponse xmlns="http://api.optimum.lt/v1/lt/Trd/"><InsertInvoiceResult><Status>Error</Status><Result xsi:nil="true" /><Error>Value cannot be null.
+Parameter name: InvArticle.ArtCode</Error></InsertInvoiceResult></InsertInvoiceResponse></soap:Body></soap:Envelope>
+[17-Jul-2024 10:57:18 UTC] Sending invoice for order 66632
+[17-Jul-2024 10:57:19 UTC] Optimum API response: <?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><InsertInvoiceResponse xmlns="http://api.optimum.lt/v1/lt/Trd/"><InsertInvoiceResult><Status>Error</Status><Result xsi:nil="true" /><Error>Value cannot be null.
+Parameter name: InvArticle.ArtCode</Error></InsertInvoiceResult></InsertInvoiceResponse></soap:Body></soap:Envelope>
+[17-Jul-2024 10:57:19 UTC] Sending invoice for order 66631
+[17-Jul-2024 10:57:19 UTC] Optimum API response: <?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><InsertInvoiceResponse xmlns="http://api.optimum.lt/v1/lt/Trd/"><InsertInvoiceResult><Status>Error</Status><Result xsi:nil="true" /><Error>Value cannot be null.
+Parameter name: InvArticle.ArtCode</Error></InsertInvoiceResult></InsertInvoiceResponse></soap:Body></soap:Envelope>
+[17-Jul-2024 10:57:19 UTC] Sending invoice for order 65374
+[17-Jul-2024 10:57:19 UTC] Optimum API response: <?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><InsertInvoiceResponse xmlns="http://api.optimum.lt/v1/lt/Trd/"><InsertInvoiceResult><Status>Error</Status><Result xsi:nil="true" /><Error>Value cannot be null.
+Parameter name: InvArticle.ArtCode</Error></InsertInvoiceResult></InsertInvoiceResponse></soap:Body></soap:Envelope>
+[17-Jul-2024 10:57:19 UTC] Sending invoice for order 65373
+[17-Jul-2024 10:57:19 UTC] PHP Deprecated:  preg_replace(): Passing null to parameter #3 ($subject) of type array|string is deprecated in /home/u576723085/domains/shop.spiritualartgallery.eu/public_html/wp-includes/kses.php on line 1745
+[17-Jul-2024 10:57:19 UTC] PHP Deprecated:  strpos(): Passing null to parameter #1 ($haystack) of type string is deprecated in /home/u576723085/domains/shop.spiritualartgallery.eu/public_html/wp-content/plugins/essential-addons-for-elementor-lite/includes/Traits/Elements.php on line 380
+[17-Jul-2024 10:57:19 UTC] Optimum API response: <?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><InsertInvoiceResponse xmlns="http://api.optimum.lt/v1/lt/Trd/"><InsertInvoiceResult><Status>Error</Status><Result xsi:nil="true" /><Error>Value cannot be null.
+Parameter name: InvArticle.ArtCode</Error></InsertInvoiceResult></InsertInvoiceResponse></soap:Body></soap:Envelope>
+[17-Jul-2024 10:57:19 UTC] Sending invoice for order 65170
+[17-Jul-2024 10:57:19 UTC] Optimum API response: <?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><InsertInvoiceResponse xmlns="http://api.optimum.lt/v1/lt/Trd/"><InsertInvoiceResult><Status>Error</Status><Result xsi:nil="true" /><Error>Value cannot be null.
+Parameter name: InvArticle.ArtCode</Error></InsertInvoiceResult></InsertInvoiceResponse></soap:Body></soap:Envelope>
